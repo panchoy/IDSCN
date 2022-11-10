@@ -238,6 +238,8 @@ def Z_score(PCCn, delta_PCC):
 def IDSCN(inpath, outpath, cova=None, region=None):
     ctrl_path = os.path.normpath(os.path.join(inpath, 'controls.csv'))
     pati_path = os.path.normpath(os.path.join(inpath, 'patients.csv'))
+    print('Controls are in {}'.format(ctrl_path))
+    print('Patients are in {}'.format(pati_path))
     ctrl = read_dataset(filepath=ctrl_path, tp='ctrl', cova=cova, region=region)
     pati = read_dataset(filepath=pati_path, tp='pati', cova=cova, region=region)
     PCCn = PCC(covas=ctrl[0], regions=ctrl[1], group=ctrl[2])
@@ -264,6 +266,7 @@ def IDSCN(inpath, outpath, cova=None, region=None):
         np.savetxt(outPath + '/' + sub + '/' + sub + '_PCCn+1.csv', PCCn_1, delimiter=',')
         np.savetxt(outPath + '/' + sub + '/' + sub + '_Z.csv', Z, delimiter=',')
         print('Subject: ', sub, ' done.')
+    print("All subjects' PCC are generated successfully!")
 
 
 def read_matrix(path, tp):
