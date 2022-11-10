@@ -77,7 +77,8 @@ def generate_dataset(filepath, outpath, group_name, group_index, cova_name, regi
     outPath = outpath
     if outpath[-1] in ['/', '\\']:
         outPath = outpath[:-1]
-
+    if not os.path.exists(outPath) or os.path.isfile(outPath):
+        os.makedirs(outPath)
     print('Raw data path is: {}'.format(filepath))
     print('Outpath is: {}'.format(outpath))
 
@@ -248,7 +249,7 @@ def IDSCN(inpath, outpath, cova=None, region=None):
     outPath = outpath
     if outpath[-1] in ['/', '\\']:
         outPath = outpath[:-1]
-    if not os.path.exists(outPath):
+    if not os.path.exists(outPath) or os.path.isfile(outPath):
         os.makedirs(outPath)
     np.savetxt(outPath + '/regions.txt', np.array(ctrl[1]), delimiter=',', fmt='%s')
     np.savetxt(outPath + '/PCCn.csv', PCCn, delimiter=',')
