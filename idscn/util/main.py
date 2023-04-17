@@ -265,12 +265,15 @@ def IDSCN(inpath, outpath, cova=None, region=None):
         PCCn_1 = PCC(ctrl[0], ctrl[1], mixed_group)
         delta_PCC = PCCn_1 - PCCn
         Z = Z_score(PCCn, delta_PCC)
+        correct_P = P(Z)
         if not os.path.exists(outPath + '/' + sub):
             os.mkdir(outPath + '/' + sub)
         df.iloc[:, :] = PCCn_1.T
         df.to_csv(outPath + '/' + sub + '/' + sub + '_PCCn+1.csv')
         df.iloc[:, :] = Z.T
         df.to_csv(outPath + '/' + sub + '/' + sub + '_Z.csv')
+        df.iloc[:, :] = correct_P.T
+        df.to_csv(outPath + '/' + sub + '/' + sub + '_P.csv')
         # np.savetxt(outPath + '/' + sub + '/' + sub + '_PCCn+1.csv', PCCn_1, delimiter=',')
         # np.savetxt(outPath + '/' + sub + '/' + sub + '_Z.csv', Z, delimiter=',')
         print('Subject: ', sub, ' done.')
