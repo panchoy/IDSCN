@@ -292,10 +292,12 @@ def read_matrix(path, tp):
 
 
 def P(Z):
-    p = sps.norm.sf(abs(Z)) * 2
-    shape = p.shape
-    correct_P = smsm.fdrcorrection(p.flatten())
-    return correct_P[1].reshape(shape)
+    p = 1 - sps.norm.cdf(Z)
+    # p = sps.norm.sf(abs(Z)) * 2
+    correct_P = []
+    for p_row in p:
+        correct_P.append(smsm.fdrcorrection(p_row.flatten())[1])
+    return np.array(correct_P)
 
 
 def draw_signifcant(savepath, count, re_col, plot):
