@@ -23,5 +23,9 @@ if __name__ == '__main__':
         outpath = '/'.join(args.output.split('\\'))
         plot = args.plot
         idscn.subtype(input_dir, outpath, plot)
+    elif args.mode == 'dif':
+        inpath = '/'.join(args.input.split('\\'))
+        outpath = '/'.join(args.output.split('\\'))
+        idscn.difference(inpath, outpath)
     else:
         parser.print_help()

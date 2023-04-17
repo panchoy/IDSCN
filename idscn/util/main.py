@@ -253,8 +253,12 @@ def IDSCN(inpath, outpath, cova=None, region=None):
         outPath = outpath[:-1]
     if not os.path.exists(outPath) or os.path.isfile(outPath):
         os.makedirs(outPath)
+    np.savetxt(outPath + '/covas.txt', np.array(ctrl[0]), delimiter=',', fmt='%s')
     np.savetxt(outPath + '/regions.txt', np.array(ctrl[1]), delimiter=',', fmt='%s')
-    np.savetxt(outPath + '/PCCn.csv', PCCn, delimiter=',')
+    df = pd.DataFrame(columns=ctrl[1], index=ctrl[1])
+    df.iloc[:, :] = PCCn.T
+    df.to_csv(outPath + '/PCCn.csv')
+    # np.savetxt(outPath + '/PCCn.csv', PCCn, delimiter=',')
     print('PCCn done.')
     for sub, p in zip(pati[0], pati[3]):
         mixed_group = mix_group(ctrl[0] + ctrl[1], ctrl[2], p)
@@ -263,8 +267,12 @@ def IDSCN(inpath, outpath, cova=None, region=None):
         Z = Z_score(PCCn, delta_PCC)
         if not os.path.exists(outPath + '/' + sub):
             os.mkdir(outPath + '/' + sub)
-        np.savetxt(outPath + '/' + sub + '/' + sub + '_PCCn+1.csv', PCCn_1, delimiter=',')
-        np.savetxt(outPath + '/' + sub + '/' + sub + '_Z.csv', Z, delimiter=',')
+        df.iloc[:, :] = PCCn_1.T
+        df.to_csv(outPath + '/' + sub + '/' + sub + '_PCCn+1.csv')
+        df.iloc[:, :] = Z.T
+        df.to_csv(outPath + '/' + sub + '/' + sub + '_Z.csv')
+        # np.savetxt(outPath + '/' + sub + '/' + sub + '_PCCn+1.csv', PCCn_1, delimiter=',')
+        # np.savetxt(outPath + '/' + sub + '/' + sub + '_Z.csv', Z, delimiter=',')
         print('Subject: ', sub, ' done.')
     print("All subjects' PCC are generated successfully!")
 
@@ -416,6 +424,34 @@ def subtype(input_dir, outpath, plot=True):
         ff.close()
     print('Cluster result is saved in {}'.format(outpath))
 
+
+def difference(inpath, outpath):
+    f = open(outpath + '/covas.txt', 'r')
+    cova = [line.strip() for line in f.readlines()]
+    f.close()
+    f = open(outpath + '/regions.txt', 'r')
+    region = [line.strip() for line in f.readlines()]
+    f.close()
+    ctrl_path = os.path.normpath(os.path.join(inpath, 'controls.csv'))
+    pati_path = os.path.normpath(os.path.join(inpath, 'patients.csv'))
+    ctrl = read_dataset(filepath=ctrl_path, tp='ctrl', cova=cova, region=region)
+    pati = read_dataset(filepath=pati_path, tp='pati', cova=cova, region=region)
+    PCCh = PCC(covas=ctrl[0], regions=ctrl[1], group=ctrl[2])
+    PCCp = PCC(covas=pati[1], regions=pati[2], group=pati[3])
+    dif_group = (PCCp - PCCh) / (PCCp + PCCh)
+    n = 0
+    Z = np.zeros(dif_group.shape)
+    for root, dirs, files in os.walk(outpath, topdown=False):
+        if len(files) == 2:
+            z_path = os.path.join(root, [i for i in files if 'Z.csv' in i][0])
+            Z += pd.read_csv(z_path, header=None).values
+            n += 1
+    if n > 1:
+        Z /= (n - 1)
+    dif_ind_mean = Z
+    corr = sps.pearsonr(dif_group.flatten(), dif_ind_mean.flatten())
+    print('The Pearson correlation between dif_group and dif_individual_mean is %.4f, p-value is %.4f' % (
+        corr[0], corr[1]))
 # if __name__ == '__main__':
 #     sourcepath = './source/'
 #     cova_name = ['Age', 'Sex', 'ICV']
