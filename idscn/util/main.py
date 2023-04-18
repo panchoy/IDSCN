@@ -458,7 +458,7 @@ def difference(inpath, outpath):
         corr[0], corr[1]))
 
 
-def getConnection(input_dir, edges):
+def getConnection(input_dir):
     assert isinstance(input_dir, str), 'input dir must be a string.'
     inputdir = input_dir
     if input_dir[-1] in ['/', '\\']:

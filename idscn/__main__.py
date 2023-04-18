@@ -27,5 +27,8 @@ if __name__ == '__main__':
         inpath = '/'.join(args.input.split('\\'))
         outpath = '/'.join(args.output.split('\\'))
         idscn.difference(inpath, outpath)
+    elif args.mode == 'Z':
+        inpath = '/'.join(args.input.split('\\'))
+        idscn.getConnection(inpath)
     else:
         parser.print_help()
