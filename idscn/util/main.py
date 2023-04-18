@@ -284,13 +284,11 @@ def IDSCN(inpath, outpath, cova=None, region=None):
 
 def read_matrix(path, tp):
     assert tp in ['pcc', 'z', 'sg'], 'tp must be in ["pcc", "z", "sg"]'
-    f = open(path, 'r')
     dtype = np.int_
     if tp in ['pcc', 'z']:
         dtype = np.float_
-    m = np.array([line.strip().split(',') for line in f.readlines()]).astype(dtype)
-    f.close()
-    return m
+    m = pd.read_csv(path, index_col=0).astype(dtype)
+    return m.values
 
 
 def P(Z):
@@ -367,7 +365,7 @@ def subtype(input_dir, outpath, plot=True):
         Z = read_matrix(inputdir + '/' + p + '/' + p + '_Z.csv', tp='z')
         if significant is None:
             significant = np.zeros(Z.shape)
-        correct_P = P(Z)
+        _, correct_P = P(Z)
         signi_conn_index = np.argwhere(correct_P < 0.05)
         if signi_conn_index.shape[0] > 0:
             rows, cols = zip(*signi_conn_index)
@@ -382,6 +380,7 @@ def subtype(input_dir, outpath, plot=True):
     select_num = int(input('Please input number of selected edges: '))
     selected_edges = getTopLocs(sorted_edges, select_num)
     print('Selected {} edges'.format(len(selected_edges)))
+
     row, col = zip(*selected_edges)
     cluster_source = []
     for p in pati:
@@ -449,7 +448,7 @@ def difference(inpath, outpath):
     for root, dirs, files in os.walk(outpath, topdown=False):
         if len(files) == 2:
             z_path = os.path.join(root, [i for i in files if 'Z.csv' in i][0])
-            Z += pd.read_csv(z_path, header=None).values
+            Z += pd.read_csv(z_path, index_col=0).values
             n += 1
     if n > 1:
         Z /= (n - 1)
@@ -457,6 +456,51 @@ def difference(inpath, outpath):
     corr = sps.pearsonr(dif_group.flatten(), dif_ind_mean.flatten())
     print('The Pearson correlation between dif_group and dif_individual_mean is %.4f, p-value is %.4f' % (
         corr[0], corr[1]))
+
+
+def getConnection(input_dir, edges):
+    assert isinstance(input_dir, str), 'input dir must be a string.'
+    inputdir = input_dir
+    if input_dir[-1] in ['/', '\\']:
+        inputdir = input_dir[:-1]
+    dirlist = os.listdir(inputdir)
+    assert 'regions.txt' in dirlist, 'regions.txt not found.'
+    f_re = open(inputdir + '/regions.txt', 'r')
+    regions = [line.strip() for line in f_re.readlines()]
+    pati = []
+    for f in dirlist:
+        if os.path.isdir(inputdir + '/' + f):
+            pati.append(f)
+    significant = None
+    for p in pati:
+        Z = read_matrix(inputdir + '/' + p + '/' + p + '_Z.csv', tp='z')
+        if significant is None:
+            significant = np.zeros(Z.shape)
+        _, correct_P = P(Z)
+        signi_conn_index = np.argwhere(correct_P < 0.05)
+        if signi_conn_index.shape[0] > 0:
+            rows, cols = zip(*signi_conn_index)
+            significant[rows, cols] = significant[rows, cols] + 1
+    sorted_edges = draw_signifcant(inputdir + '/' + inputdir.strip().split('/')[-1] + '.jpg', significant, regions,
+                                   False)
+    sg_num = []
+    for se in sorted_edges:
+        sg_num.append(str(int(se[0])) + '/' + str(se[1][0]))
+    print('Significant_count/Edge_num:')
+    print(sg_num)
+    select_num = int(input('Please input number of selected edges: '))
+    selected_edges = getTopLocs(sorted_edges, select_num)
+    print('Selected {} edges'.format(len(selected_edges)))
+
+    row, col = zip(*selected_edges)
+    df = pd.DataFrame(columns=['Subject'] + [regions[con[0]] + '--' + regions[con[1]] for con in selected_edges])
+    for p in pati:
+        df = pd.DataFrame(columns=['Subject'] + [regions[con[0]] + '--' + regions[con[1]] for con in selected_edges])
+
+        df.loc[len(df.index)] = [p] + list(pd.read_csv(inputdir + '/' + p + '/' + p + '_Z.csv', index_col=0).values[
+                                               row, col].flatten())
+    df.to_csv(inputdir + '/sig_' + len(selected_edges) + '.csv', index=False)
+
 # if __name__ == '__main__':
 #     sourcepath = './source/'
 #     cova_name = ['Age', 'Sex', 'ICV']
