@@ -156,7 +156,7 @@ def read_dataset(filepath, tp, cova, region):
     else:
         pati_subs = list(df.iloc[:, 0].values)
         pa = pd.concat([covas, regions], axis=1)
-        return list(pati_subs), list(covas.columns.values), list(regions.columns.values), pa
+        return list(pati_subs), list(covas.columns.values), list(regions.columns.values), pa.values
 
 
 def PCC(covas, regions, group):
@@ -206,7 +206,8 @@ def mix_group(cols, ctrl, pati):
            patient data.
     :return: mixed
     """
-    pati = pd.DataFrame(np.array([pati]), columns=cols)
+    prow = np.array([list(pati)])
+    pati = pd.DataFrame(prow, columns=cols)
     mixed = pd.concat([ctrl, pati])
     return mixed
 
@@ -458,7 +459,7 @@ def difference(inpath, outpath):
         corr[0], corr[1]))
 
 
-def getConnection(input_dir):
+def getConnection(input_dir, fdr=False):
     assert isinstance(input_dir, str), 'input dir must be a string.'
     inputdir = input_dir
     if input_dir[-1] in ['/', '\\']:
@@ -476,8 +477,10 @@ def getConnection(input_dir):
         Z = read_matrix(inputdir + '/' + p + '/' + p + '_Z.csv', tp='z')
         if significant is None:
             significant = np.zeros(Z.shape)
-        _, correct_P = P(Z)
-        signi_conn_index = np.argwhere(correct_P < 0.05)
+        _P, correct_P = P(Z)
+        signi_conn_index = np.argwhere(_P < 0.05)
+        if fdr:
+            signi_conn_index = np.argwhere(correct_P < 0.05)
         if signi_conn_index.shape[0] > 0:
             rows, cols = zip(*signi_conn_index)
             significant[rows, cols] = significant[rows, cols] + 1
@@ -495,11 +498,9 @@ def getConnection(input_dir):
     row, col = zip(*selected_edges)
     df = pd.DataFrame(columns=['Subject'] + [regions[con[0]] + '--' + regions[con[1]] for con in selected_edges])
     for p in pati:
-        df = pd.DataFrame(columns=['Subject'] + [regions[con[0]] + '--' + regions[con[1]] for con in selected_edges])
-
         df.loc[len(df.index)] = [p] + list(pd.read_csv(inputdir + '/' + p + '/' + p + '_Z.csv', index_col=0).values[
                                                row, col].flatten())
-    df.to_csv(inputdir + '/sig_' + len(selected_edges) + '.csv', index=False)
+    df.to_csv(inputdir + '/sig_' + str(len(selected_edges)) + '.csv', index=False)
 
 # if __name__ == '__main__':
 #     sourcepath = './source/'

@@ -63,4 +63,5 @@ def parse():
     parser.add_argument('-t', '--type', help='type control')
     parser.add_argument('-n', '--number', help='number of selected edges')
     parser.add_argument('--plot', help='plot the histogram of sorted edges', action='store_true')
+    parser.add_argument('--fdr', help='fdr correction', action='store_true')
     return parser

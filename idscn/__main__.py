@@ -1,6 +1,5 @@
-import util.main as idscn
-import config.parse as parse
-
+import main as idscn
+import parse
 if __name__ == '__main__':
     parser = parse.parse()
     args = parser.parse_args()
@@ -29,6 +28,7 @@ if __name__ == '__main__':
         idscn.difference(inpath, outpath)
     elif args.mode == 'Z':
         inpath = '/'.join(args.input.split('\\'))
-        idscn.getConnection(inpath)
+        fdr = args.fdr
+        idscn.getConnection(inpath,fdr)
     else:
         parser.print_help()
