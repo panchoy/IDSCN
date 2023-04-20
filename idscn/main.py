@@ -84,17 +84,13 @@ def generate_dataset(filepath, outpath, group_name, group_index, cova_name, regi
 
     raw = pd.read_csv(filepath, encoding_errors='ignore')
     source = raw[[raw.columns.values[group_index - 1], raw.columns.values[0]] + cova_name + region_name]
-    col_sex = 'sex'
     col_group = source.columns.values[0]
-    for c in source.columns.values:
-        if c.lower() == 'sex':
-            col_sex = c
-            break
     source = source.dropna(axis=0)
-    if source[col_sex].dtype == 'object':
-        source[col_sex] = source[col_sex].str.lower()
-        source[col_sex] = source[col_sex].replace('female', 1)
-        source[col_sex] = source[col_sex].replace('male', 2)
+    for i in range(len(cova_name)):
+        if source[2 + i].dtype == 'object':
+            factors = set(list(source[2 + i]))
+            for j, f in zip(range(len(factors)), factors):
+                source[2 + i] = source[2 + i].replace(f, j + 1)
     if tp == '0':
         hc = (source.loc[source[col_group].isin(group_name[0])])[source.columns.values[1:]]
         pa = (source.loc[source[col_group].isin(group_name[1])])[source.columns.values[1:]]
