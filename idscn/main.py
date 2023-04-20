@@ -88,7 +88,7 @@ def generate_dataset(filepath, outpath, group_name, group_index, cova_name, regi
     source = source.dropna(axis=0)
     for cvn in cova_name:
         if source[cvn].dtype == 'object':
-            factors = set(list(source[cvn]))
+            factors = set(list(source[cvn].values))
             for j, f in zip(range(len(factors)), factors):
                 source[cvn] = source[cvn].replace(f, j + 1)
     if tp == '0':
