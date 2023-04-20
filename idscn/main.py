@@ -86,11 +86,11 @@ def generate_dataset(filepath, outpath, group_name, group_index, cova_name, regi
     source = raw[[raw.columns.values[group_index - 1], raw.columns.values[0]] + cova_name + region_name]
     col_group = source.columns.values[0]
     source = source.dropna(axis=0)
-    for i in range(len(cova_name)):
-        if source[2 + i].dtype == 'object':
-            factors = set(list(source[2 + i]))
+    for cvn in cova_name:
+        if source[cvn].dtype == 'object':
+            factors = set(list(source[cvn]))
             for j, f in zip(range(len(factors)), factors):
-                source[2 + i] = source[2 + i].replace(f, j + 1)
+                source[cvn] = source[cvn].replace(f, j + 1)
     if tp == '0':
         hc = (source.loc[source[col_group].isin(group_name[0])])[source.columns.values[1:]]
         pa = (source.loc[source[col_group].isin(group_name[1])])[source.columns.values[1:]]
