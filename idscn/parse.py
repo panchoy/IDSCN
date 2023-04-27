@@ -7,6 +7,7 @@ def parse_name(path, tp='0'):
     group_name = []
     cova_name = []
     region_name = []
+    reg = '[()a-zA-Z\\d_-]+'
     with open(path, 'r') as f:
         line = f.readline()
         while line:
@@ -23,7 +24,7 @@ def parse_name(path, tp='0'):
                             while line and line.strip() == '':
                                 line = f.readline()
                             if line:
-                                arr = re.findall('[a-zA-Z\\d_-]+', line.strip())
+                                arr = re.findall(reg, line.strip())
                                 if arr[0] == 'HC':
                                     hc = arr[1:]
                                 if arr[0] == 'PA':
@@ -34,7 +35,7 @@ def parse_name(path, tp='0'):
                         while line and line.strip() == '':
                             line = f.readline()
                         if line:
-                            group_name = re.findall('[a-zA-Z\\d_-]+', line.strip())
+                            group_name = re.findall(reg, line.strip())
                     line = f.readline()
                 else:
                     arr = []
@@ -45,9 +46,9 @@ def parse_name(path, tp='0'):
                         arr.append(line)
                         line = f.readline()
                     if param[1] == 'c':
-                        cova_name = re.findall('[a-zA-Z\\d_-]+', ','.join(arr).strip())
+                        cova_name = re.findall(reg, ','.join(arr).strip())
                     else:
-                        region_name = re.findall('[a-zA-Z\\d_-]+', ','.join(arr).strip())
+                        region_name = re.findall(reg, ','.join(arr).strip())
             else:
                 print('illegal parameter {} !'.format(line.strip()))
     return group_name, cova_name, region_name
@@ -64,4 +65,5 @@ def parse():
     parser.add_argument('-n', '--number', help='number of selected edges')
     parser.add_argument('--plot', help='plot the histogram of sorted edges', action='store_true')
     parser.add_argument('--fdr', help='fdr correction', action='store_true')
+    parser.add_argument('--n_perm', help='number of permutations', type=int, default=1000)
     return parser

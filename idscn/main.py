@@ -7,6 +7,9 @@ import scipy.stats as sps
 import statsmodels.stats.multitest as smsm
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+from tqdm import trange
+import seaborn as sns
+import matplotlib.colors as mcolors
 
 
 def generate_dataset(filepath, outpath, group_name, group_index, cova_name, region_name=None, tp='0'):
@@ -152,7 +155,7 @@ def read_dataset(filepath, tp, cova, region):
     else:
         pati_subs = list(df.iloc[:, 0].values)
         pa = pd.concat([covas, regions], axis=1)
-        return list(pati_subs), list(covas.columns.values), list(regions.columns.values), pa.values
+        return list(pati_subs), list(covas.columns.values), list(regions.columns.values), pa
 
 
 def PCC(covas, regions, group):
@@ -233,13 +236,6 @@ def Z_score(PCCn, delta_PCC):
 
 
 def IDSCN(inpath, outpath, cova=None, region=None):
-    ctrl_path = os.path.normpath(os.path.join(inpath, 'controls.csv'))
-    pati_path = os.path.normpath(os.path.join(inpath, 'patients.csv'))
-    print('Controls are in {}'.format(ctrl_path))
-    print('Patients are in {}'.format(pati_path))
-    ctrl = read_dataset(filepath=ctrl_path, tp='ctrl', cova=cova, region=region)
-    pati = read_dataset(filepath=pati_path, tp='pati', cova=cova, region=region)
-    PCCn = PCC(covas=ctrl[0], regions=ctrl[1], group=ctrl[2])
     if os.path.isdir(outpath):
         l = os.listdir(outpath)
         if len(l) != 0:
@@ -250,14 +246,22 @@ def IDSCN(inpath, outpath, cova=None, region=None):
         outPath = outpath[:-1]
     if not os.path.exists(outPath) or os.path.isfile(outPath):
         os.makedirs(outPath)
-    np.savetxt(outPath + '/covas.txt', np.array(ctrl[0]), delimiter=',', fmt='%s')
-    np.savetxt(outPath + '/regions.txt', np.array(ctrl[1]), delimiter=',', fmt='%s')
+    ctrl_path = os.path.normpath(os.path.join(inpath, 'controls.csv'))
+    pati_path = os.path.normpath(os.path.join(inpath, 'patients.csv'))
+    print('Controls are in {}'.format(ctrl_path))
+    print('Patients are in {}'.format(pati_path))
+    ctrl = read_dataset(filepath=ctrl_path, tp='ctrl', cova=cova, region=region)
+    pati = read_dataset(filepath=pati_path, tp='pati', cova=cova, region=region)
     df = pd.DataFrame(columns=ctrl[1], index=ctrl[1])
+    PCCn = PCC(covas=ctrl[0], regions=ctrl[1], group=ctrl[2])
     df.iloc[:, :] = PCCn.T
     df.to_csv(outPath + '/PCCn.csv')
-    # np.savetxt(outPath + '/PCCn.csv', PCCn, delimiter=',')
     print('PCCn done.')
-    for sub, p in zip(pati[0], pati[3]):
+    # np.savetxt(outPath + '/PCCn.csv', PCCn, delimiter=',')
+    np.savetxt(outPath + '/covas.txt', np.array(ctrl[0]), delimiter=',', fmt='%s')
+    np.savetxt(outPath + '/regions.txt', np.array(ctrl[1]), delimiter=',', fmt='%s')
+    pa = pati[3].values
+    for sub, p in zip(pati[0], pa):
         mixed_group = mix_group(ctrl[0] + ctrl[1], ctrl[2], p)
         PCCn_1 = PCC(ctrl[0], ctrl[1], mixed_group)
         delta_PCC = PCCn_1 - PCCn
@@ -498,55 +502,99 @@ def getConnection(input_dir, fdr=False):
                                                row, col].flatten())
     df.to_csv(inputdir + '/sig_' + str(len(selected_edges)) + '.csv', index=False)
 
-# if __name__ == '__main__':
-#     sourcepath = './source/'
-#     cova_name = ['Age', 'Sex', 'ICV']
-#     group_name = ['HC', 'MDD']
-#     f_ROI = open('E:/Data/IDSCN/ROIselection.csv', 'r')
-#     roi_lines = f_ROI.readlines()
-#     roi_col = roi_lines[0].strip().split(',')
-#     roi_data = np.array([line.strip().split(',') for line in roi_lines[1:]])
-#     roi = pd.DataFrame(data=roi_data, columns=roi_col)
-#     sel_roi_columns = [col for col in roi.columns.values if col == 'new_altas']
-#     for sel_roi in sel_roi_columns:
-#         print(sel_roi)
-#         outpath = './dataset/' + sel_roi + '/'
-#         regions = list(roi.loc[:, sel_roi].drop(roi.loc[:, sel_roi][roi.loc[:, sel_roi] == ''].index).values)
-#         # generate_dataset(filepath=sourcepath + 'cova_' + sel_roi + '.csv', outpath=outpath,
-#         #                  cova_name=cova_name, params=params, region_name=regions, group_index=2)
-#         ctrl_path = outpath + 'controls.csv'
-#         pati_path = outpath + 'patients.csv'
-#         outpath = './output/' + sel_roi + '/'
-#         # IDSCN(ctrl_path=ctrl_path, pati_path=pati_path, outpath=outpath, c_r=(3,), cova=cova_name, region=regions)
-#         # ret = subtype(outpath)
-#         ct = 100
-#         save_dir = './cluster/' + sel_roi + '/'
-#         sel_num = [5]
-#         for sn in sel_num:
-#             max_sc = -1
-#             last_res = None
-#             last_c_num = None
-#             save_path = save_dir + 's-' + str(sn) + '_result.csv'
-#             for k in range(ct):
-#                 if not os.path.exists(save_dir):
-#                     os.makedirs(save_dir)
-#                 ret = subtype(outpath, select_num=sn)
-#                 c_num = []
-#                 df = pd.DataFrame(data={0: ret[1][0]}, columns=[0])
-#                 c_num.append(str(len(ret[1][0])))
-#                 for i in range(ret[0] - 1):
-#                     tp = pd.DataFrame(data=ret[1][i + 1], columns=[i + 1])
-#                     df = pd.concat([df, tp], axis=1, join='outer')
-#                     c_num.append(str(len(ret[1][i + 1])))
-#                 if ret[3] > max_sc:
-#                     max_sc = ret[3]
-#                     last_res = ret
-#                     last_c_num = c_num
-#                     df.to_csv(save_path, index=False)
-#                 print('s-', sn, '_', k, ' done')
-#             with open(save_path, mode='a+') as ff:
-#                 ff.write('Number of connections to cluster,' + str(last_res[2]) + '\n')
-#                 ff.write('Number of cluster,' + str(last_res[0]) + '\n')
-#                 ff.write('Clustering result,' + '/'.join(last_c_num) + '\n')
-#                 ff.write('Silhouette score,' + str(last_res[3]) + '\n')
-#                 ff.close()
+
+def SCN(inpath, outpath, cova=None, region=None, n_permutations=1000):
+    outPath = outpath
+    if outpath[-1] in ['/', '\\']:
+        outPath = outpath[:-1]
+    if not os.path.exists(outPath) or os.path.isfile(outPath):
+        os.makedirs(outPath)
+    ctrl_path = os.path.normpath(os.path.join(inpath, 'controls.csv'))
+    pati_path = os.path.normpath(os.path.join(inpath, 'patients.csv'))
+    print('Controls are in {}'.format(ctrl_path))
+    print('Patients are in {}'.format(pati_path))
+    ctrl = read_dataset(filepath=ctrl_path, tp='ctrl', cova=cova, region=region)
+    pati = read_dataset(filepath=pati_path, tp='pati', cova=cova, region=region)
+
+    df = pd.DataFrame(columns=ctrl[1], index=ctrl[1])
+    print('calculating real difference ...')
+
+    PCCn = PCC(covas=ctrl[0], regions=ctrl[1], group=ctrl[2])
+    PCCn_p = PCC(covas=pati[1], regions=pati[2], group=pati[3])
+
+    # 设置seaborn样式
+    sns.set(style='white')
+    # colors = ['darkblue', 'blue', 'green', 'darkorange', 'gold']  # 蓝、绿、橙
+    # cmap = mcolors.LinearSegmentedColormap.from_list('cmap', colors)
+
+    for t, r in [('rHC', PCCn), ('rMDD', PCCn_p)]:
+        # 创建热图
+        fig, ax = plt.subplots(figsize=(15, 15), dpi=200)
+        sns.heatmap(r, cmap="viridis", ax=ax,
+                    xticklabels=ctrl[1],
+                    yticklabels=ctrl[1],
+                    cbar_kws={"shrink": .5},
+                    annot=False, square=True,
+                    vmin=-1, vmax=1)
+
+        # 旋转x轴标签
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha='left')
+
+        # 添加标题
+        plt.title(f'{t}')
+
+        plt.tight_layout()
+
+        # 显示热图
+        plt.savefig(outPath + f'/{t}.jpg')
+
+    diff_real = PCCn_p - PCCn
+
+    print('real_diff done.')
+    n = diff_real.shape[0]
+
+    g1g2 = pd.concat([ctrl[2], pati[3]])
+
+    # 计算随机差异值
+    print('calculating permutate difference ...')
+    D_permuted = np.zeros((n_permutations, n, n))
+    for i in trange(n_permutations, ncols=100):
+        randlabel = list(np.random.permutation(g1g2.shape[0]))
+        g1_per = g1g2.iloc[randlabel[:ctrl[2].shape[0]], :]
+        g2_per = g1g2.iloc[randlabel[ctrl[2].shape[0]:], :]
+        PCCn_per = PCC(covas=ctrl[0], regions=ctrl[1], group=g1_per)
+        PCCn_p_per = PCC(covas=ctrl[0], regions=ctrl[1], group=g2_per)
+        D_permuted[i] = PCCn_p_per - PCCn_per
+    print('perm_diff done.')
+    # 计算两组之间的边差异
+    D_obs = np.abs(np.arctanh(PCCn) - np.arctanh(PCCn_p))
+
+    # 计算 z 值矩阵
+    z_matrix = np.zeros((n, n))
+    for i in range(n):
+        for j in range(i + 1, n):
+            z = (D_obs[i, j] - np.mean(D_permuted[:, i, j])) / np.std(D_permuted[:, i, j])
+            z_matrix[i, j] = z
+            z_matrix[j, i] = z
+
+    # 计算 FDR 校正的 p 值矩阵
+    p_matrix = np.zeros((n, n))
+    for i in range(n):
+        for j in range(i + 1, n):
+            if diff_real[i, j] > 0:
+                p = ((D_permuted[:, i, j].flatten() > diff_real[i, j]).astype(np.int_).sum() + 1) / (n_permutations + 1)
+            else:
+                p = ((D_permuted[:, i, j].flatten() < diff_real[i, j]).astype(np.int_).sum() + 1) / (n_permutations + 1)
+            p_matrix[i, j] = p
+            p_matrix[j, i] = p
+    fdr_p_matrix = smsm.multipletests(p_matrix[np.triu_indices(n, 1)], method='fdr_bh')[1]
+    fdr_p = np.zeros((n, n))
+    fdr_p[np.triu_indices(n, 1)] = fdr_p_matrix
+    fdr_p[np.tril_indices(n, -1)] = fdr_p_matrix
+    fdr_p[np.diag_indices(n)] = 1.0
+
+    df.iloc[:, :] = z_matrix.T
+    df.to_csv(outPath + '/SCN_Z.csv')
+    df.iloc[:, :] = fdr_p.T
+    df.to_csv(outPath + '/SCN_P_FDR.csv')
+    print('SCN done.')
