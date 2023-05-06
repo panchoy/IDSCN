@@ -533,12 +533,12 @@ def SCN(inpath, outpath, cova=None, region=None, n_permutations=1000):
         hmap = sns.heatmap(r, cmap="viridis", ax=ax,
                            xticklabels=ctrl[1],
                            yticklabels=ctrl[1],
-                           cbar_kws={"shrink": .5},
+                           cbar_kws={"shrink": .75},
                            annot=False, square=True,
-                           vmin=-1, vmax=1, cbar=False)
+                           vmin=-1, vmax=1)
 
-        cb = hmap.figure.colorbar(hmap.collections[0])  # 显示colorbar
-        cb.ax.tick_params(labelsize=20)  # 设置colorbar刻度字体大小。
+        cbar = hmap.collections[0].colorbar  # 显示colorbar
+        cbar.ax.tick_params(labelsize=20)  # 设置colorbar刻度字体大小。
 
         # 旋转x轴标签
         ax.set_xticklabels(ax.get_xticklabels(), rotation=-45, ha='left')
