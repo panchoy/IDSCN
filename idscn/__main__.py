@@ -22,9 +22,9 @@ if __name__ == '__main__':
         inpath = '/'.join(args.input.split('\\'))
         outpath = '/'.join(args.output.split('\\'))
         name_path = '/'.join(args.name.split('\\'))
-        n_perm = args.n_perm
+        # n_perm = args.n_perm
         _, cova_name, region_name = parse.parse_name(name_path)
-        idscn.SCN(inpath=inpath, outpath=outpath, cova=cova_name, region=region_name, n_permutations=n_perm)
+        idscn.SCN(inpath=inpath, outpath=outpath, cova=cova_name, region=region_name)
     elif args.mode == 'cluster':
         input_dir = '/'.join(args.input.split('\\'))
         outpath = '/'.join(args.output.split('\\'))

@@ -593,7 +593,7 @@ def SCN(inpath, outpath, cova=None, region=None, n_permutations=1000):
     fdr_p_matrix = smsm.multipletests(p_matrix[np.triu_indices(n, 1)], method='fdr_bh')[1]
     fdr_p = np.zeros((n, n))
     fdr_p[np.triu_indices(n, 1)] = fdr_p_matrix
-    fdr_p[np.tril_indices(n, -1)] = fdr_p_matrix
+    fdr_p[np.tril_indices(n, -1)] = fdr_p.T[np.tril_indices(n, -1)]
     fdr_p[np.diag_indices(n)] = 1.0
 
     df.iloc[:, :] = z_matrix.T
