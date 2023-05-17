@@ -261,6 +261,7 @@ def IDSCN(inpath, outpath, cova=None, region=None):
     np.savetxt(outPath + '/covas.txt', np.array(ctrl[0]), delimiter=',', fmt='%s')
     np.savetxt(outPath + '/regions.txt', np.array(ctrl[1]), delimiter=',', fmt='%s')
     pa = pati[3].values
+    df_n = pd.DataFrame(columns=['subject', 'n'])
     for sub, p in zip(pati[0], pa):
         mixed_group = mix_group(ctrl[0] + ctrl[1], ctrl[2], p)
         PCCn_1 = PCC(ctrl[0], ctrl[1], mixed_group)
@@ -277,9 +278,11 @@ def IDSCN(inpath, outpath, cova=None, region=None):
         df.to_csv(outPath + '/' + sub + '/' + sub + '_P.csv')
         df.iloc[:, :] = correct_P.T
         df.to_csv(outPath + '/' + sub + '/' + sub + '_P_FDR.csv')
+        df.loc[len(df.index)] = [sub, np.count_nonzero(correct_P < 0.05)]
         # np.savetxt(outPath + '/' + sub + '/' + sub + '_PCCn+1.csv', PCCn_1, delimiter=',')
         # np.savetxt(outPath + '/' + sub + '/' + sub + '_Z.csv', Z, delimiter=',')
         print('Subject: ', sub, ' done.')
+    df_n.to_csv(outPath + '/count_significant.csv', index=False)
     print("All subjects' PCC are generated successfully!")
 
 
